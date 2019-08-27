@@ -1,0 +1,97 @@
+{
+  "api": {
+    "require_startup_execution": false,
+    "class_name": "com.applicaster.sport1player.Sport1PlayerAdapter"
+  },
+  "dependency_repository_url": [
+    {
+      "url": "https://dl.bintray.com/applicaster-ltd/maven_plugins"
+    },
+    {
+      "url": "https://mvn.jwplayer.com/content/repositories/releases/"
+    }
+  ],
+  "platform": "android",
+  "author_name": "Alexander Mykhailiutenko",
+  "author_email": "amykh@scand.com",
+  "manifest_version": "0.0.1",
+  "dependency_version": "0.0.+",
+  "name": "Sport1 Player",
+  "description": "Sport1 wrapper for JWPlayer",
+  "type": "player",
+  "screen": true,
+  "identifier": "Sport1Player-Plugin",
+  "ui_builder_support": true,
+  "dependency_name": "com.applicaster:Sport1PlayerPlugin",
+  "whitelisted_account_ids": [],
+  "min_zapp_sdk": "10.0.0",
+  "react_native": false,
+  "custom_configuration_fields": [
+    {
+      "type": "text",
+      "key": "LICENSE_KEY",
+      "tooltip_text": "JW License Key"
+    },
+    {
+      "type": "text",
+      "key": "live_ad_url",
+      "tooltip_text": "Live Ad Url"
+    },
+    {
+      "type": "text",
+      "key": "live_ad_type",
+      "tooltip_text": "Live Ad Type"
+    },
+    {
+      "type": "text",
+      "key": "live_ad_offset",
+      "tooltip_text": "Live Ad Offset"
+    },
+    {
+      "type": "text",
+      "key": "vod_midroll_ad_url",
+      "tooltip_text": "VOD Midroll URL"
+    },
+    {
+      "type": "text",
+      "key": "vod_midroll_offset",
+      "tooltip_text": "VOD Midroll Offset"
+    },
+    {
+      "type": "text",
+      "key": "vod_preroll_ad_url",
+      "tooltip_text": "VOD Preroll URL"
+    },
+    {
+      "type": "text",
+      "key": "vod_ad_type",
+      "tooltip_text": "VOD Ad Type"
+    },
+    {
+      "type": "checkbox",
+      "key": "ignore_default_subscription",
+      "default": 0
+    },
+    {
+      "type": "text",
+      "key": "pin_validation_plugin_id",
+      "tooltip_text": "Plugin ID to validate item access"
+    }
+  ],
+  "hooks": {
+    "fields": [
+      {
+        "group": true,
+        "label": "Before Load",
+        "folded": true,
+        "fields": [
+          {
+            "key": "preload_plugins",
+            "type": "preload_plugins_selector",
+            "label": "Select Plugins"
+          }
+        ]
+      }
+    ]
+  }
+}
