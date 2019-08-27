@@ -14,15 +14,15 @@ import com.applicaster.pluginpresenter.PluginPresenter;
 import java.util.Map;
 
 public class Sport1PlayerAdapter extends JWPlayerAdapter implements PresentPluginResultI {
-    private static final String PRELOAD_VOD_PLUGIN_ID = "preload_vod_plugin_id";
+    private static final String PIN_VALIDATION_PLUGIN_ID = "pin_validation_plugin_id";
 
     private boolean isInline;
-    private String preloadPluginId;
+    private String validationPluginId;
 
     @Override
     public void setPluginConfigurationParams(Map params) {
         super.setPluginConfigurationParams(params);
-        preloadPluginId = (String) params.get(PRELOAD_VOD_PLUGIN_ID);
+        validationPluginId = (String) params.get(PIN_VALIDATION_PLUGIN_ID);
     }
 
     @Override
@@ -51,8 +51,8 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements PresentPlugi
     }
 
     protected void loadItem() {
-        if (preloadPluginId != null) {
-            PluginManager.InitiatedPlugin plugin = PluginManager.getInstance().getInitiatedPlugin(preloadPluginId);
+        if (validationPluginId != null) {
+            PluginManager.InitiatedPlugin plugin = PluginManager.getInstance().getInitiatedPlugin(validationPluginId);
             if (plugin != null && plugin.instance instanceof PluginPresenter) {
                 Sport1PlayerActivity activity = (Sport1PlayerActivity) getContext();
                 activity.setPresentPluginListener(this);

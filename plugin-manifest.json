@@ -74,8 +74,8 @@
     },
     {
       "type": "text",
-      "key": "preload_vod_plugin_id",
-      "tooltip_text": "Plugin ID to load before VOD"
+      "key": "pin_validation_plugin_id",
+      "tooltip_text": "Plugin ID to validate item access"
     }
   ],
   "hooks": {
