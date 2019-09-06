@@ -1,49 +1,60 @@
 package com.applicaster.sport1player;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.util.Log;
-import android.view.ViewGroup;
 
+import com.applicaster.app.CustomApplication;
 import com.applicaster.controller.PlayerLoader;
-import com.applicaster.jwplayerplugin.JWPlayerActivity;
 import com.applicaster.jwplayerplugin.JWPlayerAdapter;
-import com.applicaster.jwplayerplugin.JWPlayerContainer;
 import com.applicaster.player.PlayerLoaderI;
 import com.applicaster.plugin_manager.PluginManager;
 import com.applicaster.plugin_manager.login.LoginContract;
 import com.applicaster.plugin_manager.login.LoginManager;
 import com.applicaster.plugin_manager.playersmanager.Playable;
-import com.applicaster.pluginpresenter.PluginPresenter;
-import com.longtailvideo.jwplayer.JWPlayerView;
 import com.longtailvideo.jwplayer.events.listeners.VideoPlayerEvents;
 
+import java.util.List;
 import java.util.Map;
 
-public class Sport1PlayerAdapter extends JWPlayerAdapter implements PresentPluginResultI, VideoPlayerEvents.OnFullscreenListener {
+
+public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerEvents.OnFullscreenListener {
     private static final String TAG = Sport1PlayerAdapter.class.getSimpleName();
     private static final String PIN_VALIDATION_PLUGIN_ID = "pin_validation_plugin_id";
 
-    private JWPlayerContainer jwPlayerContainer;
-    private JWPlayerView jwPlayerView;
-
     private boolean isInline;
     private String validationPluginId;
+    private PlayerLoader applicasterPlayerLoader;
 
+    /**
+     * Optional initialization for the PlayerContract - will be called in the App's onCreate
+     */
     @Override
-    public void attachInline(@NonNull ViewGroup videoContainerView) {
-        Log.d(TAG, "attachInline");
-        jwPlayerContainer =new JWPlayerContainer(videoContainerView.getContext());
-        jwPlayerView = jwPlayerContainer.getJWPlayerView();
-        jwPlayerView.setFullscreenHandler(this);
-        jwPlayerView.addOnFullscreenListener(this);
+    public void init(@NonNull Context appContext) {
+        super.init(appContext);
+    }
 
-        ViewGroup.LayoutParams playerContainerLayoutParams
-                = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT
-                , ViewGroup.LayoutParams.MATCH_PARENT);
-        videoContainerView.addView(jwPlayerContainer, playerContainerLayoutParams);
+    /**
+     * initialization of the player instance with a playable item
+     *
+     * @param playable
+     */
+    @Override
+    public void init(@NonNull Playable playable, @NonNull Context context) {
+        super.init(playable, context);
+    }
 
-        openLoginPluginIfNeeded(true);
+    /**
+     * initialization of the player instance with  multiple playable items
+     *
+     * @param playableList
+     */
+    @Override
+    public void init(@NonNull List<Playable> playableList, @NonNull Context context) {
+        super.init(playableList, context);
+
     }
 
     @Override
@@ -79,45 +90,64 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements PresentPlugi
         }
     }
 
-    protected void displayVideo(boolean isInline){
+    /*private static Activity getActivity() throws ClassNotFoundException, IllegalAccessException, NoSuchFieldException, NoSuchMethodException, InvocationTargetException {
+        Class activityThreadClass = Class.forName("android.app.ActivityThread");
+        Object activityThread = activityThreadClass.getMethod("currentActivityThread").invoke(null);
+        Field activitiesField = activityThreadClass.getDeclaredField("mActivities");
+        activitiesField.setAccessible(true);
 
-        if (isInline){
-            /*jwPlayerView.load( JWPlayerUtil.getPlaylistItem(getFirstPlayable(), getPluginConfigurationParams()));
-            jwPlayerView.play();*/
-        }else {
-            Sport1PlayerActivity.startPlayerActivity(getContext(), getFirstPlayable(), getPluginConfigurationParams());
+        Map<Object, Object> activities = (Map<Object, Object>) activitiesField.get(activityThread);
+        if (activities == null)
+            return null;
+
+        for (Object activityRecord : activities.values()) {
+            Class activityRecordClass = activityRecord.getClass();
+            Field pausedField = activityRecordClass.getDeclaredField("paused");
+            pausedField.setAccessible(true);
+            if (!pausedField.getBoolean(activityRecord)) {
+                Field activityField = activityRecordClass.getDeclaredField("activity");
+                activityField.setAccessible(true);
+                Activity activity = (Activity) activityField.get(activityRecord);
+                return activity;
+            }
         }
+
+        return null;
+    }*/
+
+    @Override
+    protected void displayVideo(boolean isInline) {
+
     }
 
     protected void loadItem() {
-        Playable playable = getFirstPlayable();
-        Log.d(TAG, "load item: " + playable.getContentVideoURL());
-        if (validationPluginId != null && !validationPluginId.isEmpty()) {
-            Log.d(TAG, "validation plugin = " + validationPluginId);
-            PluginManager.InitiatedPlugin plugin = PluginManager.getInstance().getInitiatedPlugin(validationPluginId);
-            if (plugin != null && plugin.instance instanceof PluginPresenter) {
-                Sport1PlayerActivity activity = (Sport1PlayerActivity) getContext();
-                activity.setPresentPluginListener(this);
-                ((PluginPresenter) plugin.instance).setPluginModel(plugin.plugin);
-                ((PluginPresenter) plugin.instance).presentPlugin(activity, null);
+        Intent intent = new Intent(getContext(), PresentPluginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(PresentPluginActivity.PLUGIN_ID_EXTRA, validationPluginId);
+        intent.putExtra(PresentPluginActivity.CALLBACK_EXTRA, new PresentPluginResultI() {
+            @Override
+            public void onPresentPluginSuccess() {
+                Log.d(TAG, "present plugin success");
+
+                applicasterPlayerLoader = new PlayerLoader(new ApplicaterPlayerLoaderListener(isInline));
+                applicasterPlayerLoader.loadItem();
             }
-        } else {
-            PlayerLoader applicasterPlayerLoader = new PlayerLoader(new ApplicaterPlayerLoaderListener(isInline));
-            applicasterPlayerLoader.loadItem();
-        }
-    }
 
-    @Override
-    public void onPresentPluginSuccess() {
-        Log.d(TAG, "present plugin success");
-        PlayerLoader applicasterPlayerLoader = new PlayerLoader(new ApplicaterPlayerLoaderListener(isInline));
-        applicasterPlayerLoader.loadItem();
-    }
+            @Override
+            public void onPresentPluginFailure() {
+                //  TODO: process negative plugin result
+                Log.d(TAG, "present plugin failed");
+            }
 
-    @Override
-    public void onPresentPluginFailure() {
-        //  TODO: process negative plugin result
-        Log.d(TAG, "present plugin failed");
+            @Override
+            public PluginManager getPluginManager() {
+                return PluginManager.getInstance();
+            }
+        });
+        getContext().startActivity(intent);
+
+        //PlayerLoader applicasterPlayerLoader = new PlayerLoader(new ApplicaterPlayerLoaderListener(isInline));
+        //applicasterPlayerLoader.loadItem();
     }
 
     /************************** PlayerLoaderI ********************/
@@ -141,6 +171,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements PresentPlugi
 
         @Override
         public void onItemLoaded(Playable playable) {
+            Log.d(TAG, "Item loaded!");
             init(playable, getContext());
             displayVideo(isInline);
         }
