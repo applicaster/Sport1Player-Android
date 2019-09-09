@@ -14,7 +14,7 @@
   "platform": "android",
   "author_name": "Alexander Mykhailiutenko",
   "author_email": "amykh@scand.com",
-  "manifest_version": "0.0.1",
+  "manifest_version": "0.0.2",
   "dependency_version": "0.0.+",
   "name": "Sport1 Player",
   "description": "Sport1 wrapper for JWPlayer",

@@ -1,12 +1,13 @@
 package com.applicaster.sport1player;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.annotation.NonNull;
-import android.util.Log;
+import android.support.v4.content.LocalBroadcastManager;
 
-import com.applicaster.app.CustomApplication;
 import com.applicaster.controller.PlayerLoader;
 import com.applicaster.jwplayerplugin.JWPlayerAdapter;
 import com.applicaster.player.PlayerLoaderI;
@@ -26,7 +27,18 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
 
     private boolean isInline;
     private String validationPluginId;
-    private PlayerLoader applicasterPlayerLoader;
+    private boolean isReceiverRegistered = false;
+
+    private BroadcastReceiver validationReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            boolean validated = intent.getBooleanExtra(PresentPluginActivity.VALIDATED_EXTRA, false);
+            if (validated) {
+                PlayerLoader applicasterPlayerLoader = new PlayerLoader(new ApplicaterPlayerLoaderListener(isInline));
+                applicasterPlayerLoader.loadItem();
+            }
+        }
+    };
 
     /**
      * Optional initialization for the PlayerContract - will be called in the App's onCreate
@@ -34,6 +46,11 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     @Override
     public void init(@NonNull Context appContext) {
         super.init(appContext);
+        if (!isReceiverRegistered) {
+            LocalBroadcastManager.getInstance(appContext).registerReceiver(validationReceiver,
+                    new IntentFilter(PresentPluginActivity.VALIDATION_EVENT));
+            isReceiverRegistered = true;
+        }
     }
 
     /**
@@ -44,6 +61,11 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     @Override
     public void init(@NonNull Playable playable, @NonNull Context context) {
         super.init(playable, context);
+        if (!isReceiverRegistered) {
+            LocalBroadcastManager.getInstance(context).registerReceiver(validationReceiver,
+                    new IntentFilter(PresentPluginActivity.VALIDATION_EVENT));
+            isReceiverRegistered = true;
+        }
     }
 
     /**
@@ -54,19 +76,29 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     @Override
     public void init(@NonNull List<Playable> playableList, @NonNull Context context) {
         super.init(playableList, context);
+        if (!isReceiverRegistered) {
+            LocalBroadcastManager.getInstance(context).registerReceiver(validationReceiver,
+                    new IntentFilter(PresentPluginActivity.VALIDATION_EVENT));
+            isReceiverRegistered = true;
+        }
+    }
 
+    @Override
+    public void onDestroy() {
+        if (isReceiverRegistered) {
+            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(validationReceiver);
+        }
+        super.onDestroy();
     }
 
     @Override
     public void setPluginConfigurationParams(Map params) {
-        Log.d(TAG, "set config");
         validationPluginId = (String) params.get(PIN_VALIDATION_PLUGIN_ID);
         super.setPluginConfigurationParams(params);
     }
 
     @Override
     protected void openLoginPluginIfNeeded(final boolean isInline) {
-        Log.d(TAG, "openLogin, inline = " + isInline);
         /**
          * if item is not locked continue to play, otherwise call login with playable item.
          */
@@ -90,64 +122,11 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         }
     }
 
-    /*private static Activity getActivity() throws ClassNotFoundException, IllegalAccessException, NoSuchFieldException, NoSuchMethodException, InvocationTargetException {
-        Class activityThreadClass = Class.forName("android.app.ActivityThread");
-        Object activityThread = activityThreadClass.getMethod("currentActivityThread").invoke(null);
-        Field activitiesField = activityThreadClass.getDeclaredField("mActivities");
-        activitiesField.setAccessible(true);
-
-        Map<Object, Object> activities = (Map<Object, Object>) activitiesField.get(activityThread);
-        if (activities == null)
-            return null;
-
-        for (Object activityRecord : activities.values()) {
-            Class activityRecordClass = activityRecord.getClass();
-            Field pausedField = activityRecordClass.getDeclaredField("paused");
-            pausedField.setAccessible(true);
-            if (!pausedField.getBoolean(activityRecord)) {
-                Field activityField = activityRecordClass.getDeclaredField("activity");
-                activityField.setAccessible(true);
-                Activity activity = (Activity) activityField.get(activityRecord);
-                return activity;
-            }
-        }
-
-        return null;
-    }*/
-
-    @Override
-    protected void displayVideo(boolean isInline) {
-
-    }
-
     protected void loadItem() {
         Intent intent = new Intent(getContext(), PresentPluginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(PresentPluginActivity.PLUGIN_ID_EXTRA, validationPluginId);
-        intent.putExtra(PresentPluginActivity.CALLBACK_EXTRA, new PresentPluginResultI() {
-            @Override
-            public void onPresentPluginSuccess() {
-                Log.d(TAG, "present plugin success");
-
-                applicasterPlayerLoader = new PlayerLoader(new ApplicaterPlayerLoaderListener(isInline));
-                applicasterPlayerLoader.loadItem();
-            }
-
-            @Override
-            public void onPresentPluginFailure() {
-                //  TODO: process negative plugin result
-                Log.d(TAG, "present plugin failed");
-            }
-
-            @Override
-            public PluginManager getPluginManager() {
-                return PluginManager.getInstance();
-            }
-        });
+        intent.putExtra(PresentPluginActivity.CALLBACK_EXTRA, (PresentPluginResultI) () -> PluginManager.getInstance());
         getContext().startActivity(intent);
-
-        //PlayerLoader applicasterPlayerLoader = new PlayerLoader(new ApplicaterPlayerLoaderListener(isInline));
-        //applicasterPlayerLoader.loadItem();
     }
 
     /************************** PlayerLoaderI ********************/
@@ -171,7 +150,6 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
 
         @Override
         public void onItemLoaded(Playable playable) {
-            Log.d(TAG, "Item loaded!");
             init(playable, getContext());
             displayVideo(isInline);
         }
@@ -183,7 +161,6 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
 
         @Override
         public void showMediaErroDialog() {
-
         }
     }
 }
