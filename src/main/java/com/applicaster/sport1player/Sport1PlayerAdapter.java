@@ -8,25 +8,34 @@ import android.content.IntentFilter;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.applicaster.atom.model.APAtomEntry;
 import com.applicaster.controller.PlayerLoader;
 import com.applicaster.jwplayerplugin.JWPlayerAdapter;
 import com.applicaster.player.PlayerLoaderI;
-import com.applicaster.plugin_manager.PluginManager;
 import com.applicaster.plugin_manager.login.LoginContract;
 import com.applicaster.plugin_manager.login.LoginManager;
 import com.applicaster.plugin_manager.playersmanager.Playable;
+import com.google.gson.internal.LinkedTreeMap;
 import com.longtailvideo.jwplayer.events.listeners.VideoPlayerEvents;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerEvents.OnFullscreenListener {
     private static final String TAG = Sport1PlayerAdapter.class.getSimpleName();
     private static final String PIN_VALIDATION_PLUGIN_ID = "pin_validation_plugin_id";
+    private static final String TRACKING_INFO_KEY = "tracking_info";
+    private static final String FSK_KEY = "fsk";
+    private static final String FSK_PATTERN = "FSK (\\d+)";
+    private static final String AGE_RESTRICTION_START_KEY = "ageRestrictionStart";
+    private static final String AGE_RESTRICTION_END_KEY = "ageRestrictionEnd";
 
     private boolean isInline;
     private String validationPluginId;
+    private double validationAge = 16f;
     private boolean isReceiverRegistered = false;
 
     private BroadcastReceiver validationReceiver = new BroadcastReceiver() {
@@ -34,8 +43,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         public void onReceive(Context context, Intent intent) {
             boolean validated = intent.getBooleanExtra(PresentPluginActivity.VALIDATED_EXTRA, false);
             if (validated) {
-                PlayerLoader applicasterPlayerLoader = new PlayerLoader(new ApplicaterPlayerLoaderListener(isInline));
-                applicasterPlayerLoader.loadItem();
+                Sport1PlayerAdapter.super.displayVideo(isInline);
             }
         }
     };
@@ -122,11 +130,37 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         }
     }
 
-    protected void loadItem() {
+    @Override
+    protected void displayVideo(boolean isInline) {
         Intent intent = new Intent(getContext(), PresentPluginActivity.class);
         intent.putExtra(PresentPluginActivity.PLUGIN_ID_EXTRA, validationPluginId);
-        intent.putExtra(PresentPluginActivity.CALLBACK_EXTRA, (PresentPluginResultI) () -> PluginManager.getInstance());
         getContext().startActivity(intent);
+    }
+
+    protected void loadItem() {
+        PlayerLoader applicasterPlayerLoader = new PlayerLoader(new ApplicaterPlayerLoaderListener(isInline));
+        applicasterPlayerLoader.loadItem();
+    }
+
+    private boolean validatePlayable(Playable playable) {
+        if (playable.isLive()) {
+            //  TODO: implement livestream validation
+            return false;
+        }
+        else {
+            APAtomEntry entry = ((APAtomEntry.APAtomEntryPlayable)playable).getEntry();
+            LinkedTreeMap<Object, Object> info = entry.getExtension(TRACKING_INFO_KEY, LinkedTreeMap.class);
+            if (info == null)
+                return false;
+
+            String fsk = info.containsKey(FSK_KEY) ? (String) info.get(FSK_KEY) : "";
+            double fskAge = 0;
+            Matcher matcher = Pattern.compile(FSK_PATTERN).matcher(fsk);
+            if (matcher.matches())
+                fskAge = Double.parseDouble(matcher.group(1));
+
+            return fskAge >= validationAge;
+        }
     }
 
     /************************** PlayerLoaderI ********************/
@@ -151,7 +185,10 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         @Override
         public void onItemLoaded(Playable playable) {
             init(playable, getContext());
-            displayVideo(isInline);
+            if (validatePlayable(playable))
+                displayVideo(isInline);
+            else
+                Sport1PlayerAdapter.super.displayVideo(isInline);
         }
 
         @Override
