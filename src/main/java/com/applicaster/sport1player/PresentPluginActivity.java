@@ -14,11 +14,9 @@ import static com.applicaster.pluginpresenter.PluginPresenter.PLUGIN_PRESENTER_R
 public class PresentPluginActivity extends AppCompatActivity {
     private static final String TAG = PresentPluginActivity.class.getSimpleName();
     static final String PLUGIN_ID_EXTRA = "PLUGIN_ID_EXTRA";
-    static final String CALLBACK_EXTRA = "CALLBACK_EXTRA";
     static final String VALIDATED_EXTRA = "VALIDATED_EXTRA";
     static final String VALIDATION_EVENT = "VALIDATION_EVENT";
 
-    private PresentPluginResultI mPresenterListener;
     private String mPluginId;
 
     @Override
@@ -27,7 +25,6 @@ public class PresentPluginActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         mPluginId = intent.getStringExtra(PLUGIN_ID_EXTRA);
-        mPresenterListener = (PresentPluginResultI) intent.getSerializableExtra(CALLBACK_EXTRA);
     }
 
     @Override
@@ -38,9 +35,10 @@ public class PresentPluginActivity extends AppCompatActivity {
     }
 
     private void presentPlugin() {
-        if (mPresenterListener.getPluginManager() != null) {
+        PluginManager manager = PluginManager.getInstance();
+        if (manager != null) {
             if (mPluginId != null && !mPluginId.isEmpty()) {
-                PluginManager.InitiatedPlugin plugin = mPresenterListener.getPluginManager().getInitiatedPlugin(mPluginId);
+                PluginManager.InitiatedPlugin plugin = manager.getInitiatedPlugin(mPluginId);
 
                 if (plugin != null && plugin.instance instanceof PluginPresenter) {
                     ((PluginPresenter) plugin.instance).setPluginModel(plugin.plugin);
