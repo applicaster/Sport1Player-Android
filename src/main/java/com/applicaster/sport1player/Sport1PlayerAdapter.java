@@ -128,7 +128,6 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         final LoginContract loginPlugin = LoginManager.getLoginPlugin();
         this.isInline = isInline;
         if (loginPlugin != null ){
-
             loginPlugin.isItemLocked(getContext(), getFirstPlayable(), result -> {
                 if (result) {
                     loginPlugin.login(getContext(), getFirstPlayable(), null, loginResult -> {
@@ -266,6 +265,11 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         @Override
         public void onItemLoaded(Playable playable) {
             init(playable, getContext());
+            final LoginContract loginPlugin = LoginManager.getLoginPlugin();
+            if (playable.isLive() && loginPlugin != null) {
+                String tokenedUrl = playable.getContentVideoURL() + "?access_token=" + loginPlugin.getToken();
+                playable.setContentVideoUrl(tokenedUrl);
+            }
             if (validatePlayable(playable)) {
                 if (!playable.isLive()) {
                     //  live stream will wait for JSON check in processLivestreamData
