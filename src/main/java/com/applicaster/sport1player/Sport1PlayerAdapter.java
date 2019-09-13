@@ -129,11 +129,11 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         final LoginContract loginPlugin = LoginManager.getLoginPlugin();
         this.isInline = isInline;
         if (loginPlugin != null ){
-            accessToken = loginPlugin.getToken();
             loginPlugin.isItemLocked(getContext(), getFirstPlayable(), result -> {
                 if (result) {
                     loginPlugin.login(getContext(), getFirstPlayable(), null, loginResult -> {
                         if (loginResult) {
+                            accessToken = loginPlugin.getToken();
                             loadItem();
                         }
                     });
