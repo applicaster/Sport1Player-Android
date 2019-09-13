@@ -51,6 +51,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     private String livestreamUrl;
     private double validationAge = 16f;
     private boolean isReceiverRegistered = false;
+    private String accessToken;
 
     private BroadcastReceiver validationReceiver = new BroadcastReceiver() {
         @Override
@@ -128,7 +129,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         final LoginContract loginPlugin = LoginManager.getLoginPlugin();
         this.isInline = isInline;
         if (loginPlugin != null ){
-
+            accessToken = loginPlugin.getToken();
             loginPlugin.isItemLocked(getContext(), getFirstPlayable(), result -> {
                 if (result) {
                     loginPlugin.login(getContext(), getFirstPlayable(), null, loginResult -> {
@@ -266,6 +267,10 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         @Override
         public void onItemLoaded(Playable playable) {
             init(playable, getContext());
+            if (playable.isLive()) {
+                String tokenedUrl = playable.getContentVideoURL() + "?access_token=" + accessToken;
+                playable.setContentVideoUrl(tokenedUrl);
+            }
             if (validatePlayable(playable)) {
                 if (!playable.isLive()) {
                     //  live stream will wait for JSON check in processLivestreamData
