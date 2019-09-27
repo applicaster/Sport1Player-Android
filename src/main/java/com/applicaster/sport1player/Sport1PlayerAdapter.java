@@ -17,6 +17,7 @@ import com.applicaster.player.PlayerLoaderI;
 import com.applicaster.plugin_manager.login.LoginContract;
 import com.applicaster.plugin_manager.login.LoginManager;
 import com.applicaster.plugin_manager.playersmanager.Playable;
+import com.applicaster.session.SessionStorageUtil;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
@@ -45,6 +46,8 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     private static final String AGE_RESTRICTION_END_KEY = "ageRestrictionEnd";
     private static final String EPG_KEY = "epg";
     private static final String END_KEY = "end";
+    private static final String TOKEN_KEY = "stream_token";
+    private static final String NAMESPACE = "InPlayer.v1";
 
     private boolean isInline;
     private String validationPluginId;
@@ -265,9 +268,9 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         @Override
         public void onItemLoaded(Playable playable) {
             init(playable, getContext());
-            final LoginContract loginPlugin = LoginManager.getLoginPlugin();
-            if (playable.isLive() && loginPlugin != null) {
-                String tokenedUrl = playable.getContentVideoURL() + "?access_token=" + loginPlugin.getToken();
+            if (playable.isLive()) {
+                String token = SessionStorageUtil.INSTANCE.get(TOKEN_KEY, NAMESPACE);
+                String tokenedUrl = playable.getContentVideoURL() + "?access_token=" + token;
                 playable.setContentVideoUrl(tokenedUrl);
             }
             if (validatePlayable(playable)) {
