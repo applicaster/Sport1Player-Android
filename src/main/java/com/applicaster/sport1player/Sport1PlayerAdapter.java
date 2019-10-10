@@ -1,5 +1,6 @@
 package com.applicaster.sport1player;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -41,18 +42,18 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     private static final String LIVESTREAM_URL = "livestream_url";
     private static final String TRACKING_INFO_KEY = "tracking_info";
     private static final String FSK_KEY = "fsk";
-    private static final String FSK_PATTERN = "FSK (\\d+)";
+    private static final String FSK_PATTERN = "FSK\\s*(\\d+)";
     private static final String AGE_RESTRICTION_START_KEY = "ageRestrictionStart";
     private static final String AGE_RESTRICTION_END_KEY = "ageRestrictionEnd";
     private static final String EPG_KEY = "epg";
     private static final String END_KEY = "end";
     private static final String TOKEN_KEY = "stream_token";
     private static final String NAMESPACE = "InPlayer.v1";
+    private static final double VALIDATION_AGE = 16f;
 
     private boolean isInline;
     private String validationPluginId;
     private String livestreamUrl;
-    private double validationAge = 16f;
     private boolean isReceiverRegistered = false;
 
     private BroadcastReceiver validationReceiver = new BroadcastReceiver() {
@@ -81,7 +82,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     /**
      * initialization of the player instance with a playable item
      *
-     * @param playable
+     * @param playable Playable to load
      */
     @Override
     public void init(@NonNull Playable playable, @NonNull Context context) {
@@ -96,7 +97,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     /**
      * initialization of the player instance with  multiple playable items
      *
-     * @param playableList
+     * @param playableList List of playables to load
      */
     @Override
     public void init(@NonNull List<Playable> playableList, @NonNull Context context) {
@@ -125,8 +126,8 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
 
     @Override
     protected void openLoginPluginIfNeeded(final boolean isInline) {
-        /**
-         * if item is not locked continue to play, otherwise call login with playable item.
+        /*
+          if item is not locked continue to play, otherwise call login with playable item.
          */
         final LoginContract loginPlugin = LoginManager.getLoginPlugin();
         this.isInline = isInline;
@@ -242,7 +243,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
             if (matcher.matches())
                 fskAge = Double.parseDouble(matcher.group(1));
 
-            return fskAge >= validationAge;
+            return fskAge >= VALIDATION_AGE;
         }
     }
 
@@ -294,6 +295,8 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     }
 
     private void getJSON(final String webService) {
+        //  outer class isn't an Activity or Fragment, so no leak produced here
+        @SuppressLint("StaticFieldLeak")
         class GetJSON extends AsyncTask<Void, Void, String> {
             @Override
             protected String doInBackground(Void... voids) {
