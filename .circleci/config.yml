@@ -71,3 +71,12 @@ workflows:
           filters:
             tags:
               only: /.*/
+                # Execute job for no branches and all tags.
+      - deploy:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/
