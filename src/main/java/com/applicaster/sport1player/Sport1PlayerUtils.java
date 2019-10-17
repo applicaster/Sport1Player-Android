@@ -52,11 +52,11 @@ class Sport1PlayerUtils {
     static boolean isValidationNeeded(Playable playable) {
         if (playable.isLive())
             return false;
-
+        
         APAtomEntry entry = ((APAtomEntry.APAtomEntryPlayable) playable).getEntry();
-        Map info = entry.getExtension(TRACKING_INFO_KEY, LinkedHashMap.class);  //  validation from adapter
+        Map info = entry.getExtension(TRACKING_INFO_KEY, LinkedTreeMap.class);  //  validation from adapter
         if (info == null) {
-            info = entry.getExtension(TRACKING_INFO_KEY, LinkedTreeMap.class);  //  validation from activity
+            info = entry.getExtension(TRACKING_INFO_KEY, LinkedHashMap.class);  //  validation from activity
         }
         if (info == null) {
             return false;
