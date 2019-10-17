@@ -9,6 +9,10 @@
             android:configChanges="screenSize|orientation"
             android:theme="@style/Theme.AppCompat.NoActionBar">
         </activity>
+        <activity android:name=".Sport1PlayerActivity"
+            android:configChanges="screenSize|orientation"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
+        </activity>
     </application>
 
 </manifest>
