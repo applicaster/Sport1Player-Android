@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.applicaster.jwplayerplugin.JWPlayerActivity;
@@ -21,6 +22,7 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
     private String validationPluginId;
     private String liveConfig;
     private boolean wasPaused;
+    private CountDownTimer timer = null;
 
     private boolean isReceiverRegistered = false;
     private BroadcastReceiver validationReceiver = new BroadcastReceiver() {
@@ -60,6 +62,7 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
                 }
             }
         }
+        setupNextValidation();
         super.onResume();
     }
 
@@ -67,6 +70,7 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
     protected void onPause() {
         super.onPause();
         wasPaused = true;
+        clearNextValidation();
     }
 
     @Override
@@ -80,5 +84,30 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
         Intent intent = new Intent(context, Sport1PlayerActivity.class);
         intent.putExtras(bundle);
         context.startActivity(intent);
+    }
+
+    private void setupNextValidation() {
+        long nextValidation = Sport1PlayerUtils.getNextValidationTime(liveConfig);
+
+        long now = Sport1PlayerUtils.getCurrentTime();
+        long timeout = (nextValidation - now - 1) * 1000;
+        if (timer != null)
+            timer.cancel();
+        timer = new CountDownTimer(timeout, timeout) {
+
+            @Override
+            public void onTick(long millisUntilFinished) {
+            }
+
+            @Override
+            public void onFinish() {
+                Sport1PlayerUtils.displayValidation(Sport1PlayerActivity.this, validationPluginId);
+            }
+        }.start();
+    }
+
+    private void clearNextValidation() {
+        if (timer != null)
+            timer.cancel();
     }
 }
