@@ -62,7 +62,7 @@ dependencies {
     if (devSDK != null) {
         implementation project(':applicaster-android-sdk')
     } else {
-        implementation 'com.applicaster:applicaster-android-sdk:4.0.1'
+        implementation 'com.applicaster:applicaster-android-sdk:4.1.1'
     }
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
