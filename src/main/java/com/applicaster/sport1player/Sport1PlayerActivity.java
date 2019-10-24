@@ -22,14 +22,15 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
     private String validationPluginId;
     private String liveConfig;
     private boolean wasPaused;
+    private boolean wasValidated;
     private CountDownTimer timer = null;
 
     private boolean isReceiverRegistered = false;
     private BroadcastReceiver validationReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            boolean validated = intent.getBooleanExtra(PresentPluginActivity.VALIDATED_EXTRA, false);
-            if (!validated) {
+            wasValidated = intent.getBooleanExtra(PresentPluginActivity.VALIDATED_EXTRA, false);
+            if (!wasValidated) {
                 finish();
             }
         }
@@ -53,7 +54,7 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
 
     @Override
     protected void onResume() {
-        if (wasPaused) {
+        if (wasPaused && !wasValidated) {
             wasPaused = false;
             if (playable != null) {
                 if ((playable.isLive() && Sport1PlayerUtils.isLiveValidationNeeded(liveConfig))
@@ -62,7 +63,8 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
                 }
             }
         }
-        setupNextValidation();
+        if (playable != null && playable.isLive())
+            setupNextValidation();
         super.onResume();
     }
 
@@ -88,6 +90,8 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
 
     private void setupNextValidation() {
         long nextValidation = Sport1PlayerUtils.getNextValidationTime(liveConfig);
+        if (nextValidation == 0)
+            return;
 
         long now = Sport1PlayerUtils.getCurrentTime();
         long timeout = (nextValidation - now - 1) * 1000;

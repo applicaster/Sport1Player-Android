@@ -221,7 +221,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         }
 
         private void tryDisplayVideo(Playable playable) {
-            if (validatePlayable(playable)) {
+            if (playable != null && validatePlayable(playable) && !playable.isFree()) {
                 if (!playable.isLive()) {
                     //  live stream will wait for JSON check in processLivestreamData
                     Sport1PlayerUtils.displayValidation(getContext(), validationPluginId);
