@@ -184,12 +184,14 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         @Override
         public void onItemLoaded(Playable playable) {
             init(playable, getContext());
+
             if (playable.isLive()) {
                 String token = SessionStorageUtil.INSTANCE.get(TOKEN_KEY, NAMESPACE);
                 String tokenedUrl = playable.getContentVideoURL() + "?access_token=" + token;
                 playable.setContentVideoUrl(tokenedUrl);
             }
-            if (validatePlayable(playable)) {
+
+            if (validatePlayable(playable) && !playable.isFree()) {
                 if (!playable.isLive()) {
                     //  live stream will wait for JSON check in processLivestreamData
                     Sport1PlayerUtils.displayValidation(getContext(), validationPluginId);
