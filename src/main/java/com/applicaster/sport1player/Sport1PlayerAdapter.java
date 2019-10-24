@@ -1,30 +1,24 @@
 package com.applicaster.sport1player;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.AsyncTask;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.applicaster.atom.model.APAtomEntry;
 import com.applicaster.controller.PlayerLoader;
 import com.applicaster.jwplayerplugin.JWPlayerAdapter;
 import com.applicaster.player.PlayerLoaderI;
 import com.applicaster.plugin_manager.login.LoginContract;
 import com.applicaster.plugin_manager.login.LoginManager;
 import com.applicaster.plugin_manager.playersmanager.Playable;
-import com.applicaster.session.SessionStorageUtil;
 import com.longtailvideo.jwplayer.events.listeners.VideoPlayerEvents;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +29,10 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
 
     private static final String TOKEN_KEY = "stream_token";
     private static final String NAMESPACE = "InPlayer.v1";
+
+    private static final String STREAM_TOKEN_PARAM_NAME = "access_token";
+    private static final String AUTH_ID_EXT_KEY = "auth_id";
+    private static final String IN_PLAYER_API_BASE_URL = "https://services.inplayer.com";
 
     private boolean isInline;
     private String validationPluginId;
@@ -51,6 +49,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
             }
         }
     };
+    private StreamTokenService streamTokenService;
 
     /**
      * Optional initialization for the PlayerContract - will be called in the App's onCreate
@@ -184,13 +183,44 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         @Override
         public void onItemLoaded(Playable playable) {
             init(playable, getContext());
+            // Append refreshToken for livestream video.
+            Uri contentVideoUri = Uri.parse(playable.getContentVideoURL());
+            if (playable.isLive() && contentVideoUri.getQueryParameter(STREAM_TOKEN_PARAM_NAME) == null) {
+                APAtomEntry entry = ((APAtomEntry.APAtomEntryPlayable) playable).getEntry();
+                String authId = entry.getExtension(AUTH_ID_EXT_KEY, String.class).split("_")[0];
+                String accessToken = LoginManager.getLoginPlugin().getToken();
+                if (streamTokenService == null) {
+                    streamTokenService = new StreamTokenService(IN_PLAYER_API_BASE_URL);
+                }
+                streamTokenService.getStreamToken(authId, accessToken, new Callback() {
+                    @Override
+                    public void onResult(String refreshToken) {
+                        String tokenedUrl = contentVideoUri.buildUpon()
+                                .appendQueryParameter(STREAM_TOKEN_PARAM_NAME, refreshToken)
+                                .build()
+                                .toString();
+                        playable.setContentVideoUrl(tokenedUrl);
+                        tryDisplayVideo(playable);
+                    }
 
-            if (playable.isLive()) {
-                String token = SessionStorageUtil.INSTANCE.get(TOKEN_KEY, NAMESPACE);
-                String tokenedUrl = playable.getContentVideoURL() + "?access_token=" + token;
-                playable.setContentVideoUrl(tokenedUrl);
+                    @Override
+                    public void onError(Throwable error) {
+                        if (error instanceof RestUtil.UnautorizedException) {
+                            LoginContract loginPlugin = LoginManager.getLoginPlugin();
+                            if (loginPlugin != null) {
+                                loginPlugin.login(getContext(), playable, null, loginResult -> onItemLoaded(playable));
+                            }
+                        } else {
+                            error.printStackTrace();
+                        }
+                    }
+                });
+            } else {
+                tryDisplayVideo(playable);
             }
+        }
 
+        private void tryDisplayVideo(Playable playable) {
             if (validatePlayable(playable) && !playable.isFree()) {
                 if (!playable.isLive()) {
                     //  live stream will wait for JSON check in processLivestreamData
@@ -212,33 +242,14 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     }
 
     private void getJSON(final String webService) {
-        //  outer class isn't an Activity or Fragment, so no leak produced here
-        @SuppressLint("StaticFieldLeak")
-        class GetJSON extends AsyncTask<Void, Void, String> {
+        RestUtil.get(webService, null, new Callback() {
             @Override
-            protected String doInBackground(Void... voids) {
-                try {
-                    URL url = new URL(webService);
-                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    StringBuilder builder = new StringBuilder();
-                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                    String json;
-                    while ((json = bufferedReader.readLine()) != null) {
-                        builder.append(json).append("\n");
-                    }
-                    return builder.toString().trim();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(String json) {
-                if (json != null) {
+            public void onResult(String result) {
+                if (result != null) {
                     //  There is some live stream config
-                    livestreamConfig = json;
-                    if (Sport1PlayerUtils.isLiveValidationNeeded(json))
+
+                    livestreamConfig = result;
+                    if (Sport1PlayerUtils.isLiveValidationNeeded(result))
                         Sport1PlayerUtils.displayValidation(getContext(), validationPluginId);
                     else
                         displayVideo(isInline);
@@ -247,9 +258,11 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
                     displayVideo(isInline);
                 }
             }
-        }
 
-        GetJSON getJSON = new GetJSON();
-        getJSON.execute();
+            @Override
+            public void onError(Throwable error) {
+
+            }
+        });
     }
 }
