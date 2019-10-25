@@ -3,6 +3,7 @@ package com.applicaster.sport1player;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
+import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,10 +47,19 @@ public class StreamTokenService {
 
             @Override
             public void onError(Throwable error) {
+                if (error instanceof RestUtil.NetworkException) {
+                    int responseCode = ((RestUtil.NetworkException) error).getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_FORBIDDEN || responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                        callback.onError(new UnautorizedException());
+                        return;
+                    }
+                }
                 callback.onError(error);
             }
         });
+    }
 
+    public static class UnautorizedException extends RuntimeException {
     }
 }
 

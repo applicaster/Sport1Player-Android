@@ -39,13 +39,11 @@ public class RestUtil {
                             builder.append(json).append("\n");
                         }
                         return new ResultHolder(builder.toString().trim(), null);
-                    } else if (connection.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED){
-                        return new ResultHolder(null, new UnautorizedException());
                     } else {
-                        return new ResultHolder(null, new NetworkException());
+                        return new ResultHolder(null, new NetworkException(connection.getResponseCode()));
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    return new ResultHolder(null, e);
                 } finally {
                     if (bufferedReader != null) {
                         try {
@@ -55,7 +53,6 @@ public class RestUtil {
                         }
                     }
                 }
-                return null;
             }
 
             @Override
@@ -80,12 +77,16 @@ public class RestUtil {
         }
     }
 
-    public static class UnautorizedException extends RuntimeException {
-    }
-
     static class NetworkException extends RuntimeException {
-        public NetworkException() {
+        private final int responseCode;
+
+        public NetworkException(int responseCode) {
             super("Network error occurred");
+            this.responseCode = responseCode;
+        }
+
+        public int getResponseCode() {
+            return responseCode;
         }
     }
 }
