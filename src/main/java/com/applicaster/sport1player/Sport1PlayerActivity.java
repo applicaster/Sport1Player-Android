@@ -38,7 +38,6 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Timber.d("Sport1PlayerActivity onCreate");
 
         playable = (Playable) getIntent().getSerializableExtra(PLAYABLE_KEY);
         validationPluginId = getIntent().getStringExtra(VALIDATION_KEY);
@@ -111,7 +110,6 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
             PluginManager manager = PluginManager.getInstance();
             if (manager != null) {
                 if (validationPluginId != null && !validationPluginId.isEmpty()) {
-                    Timber.d("Sport1PlayerActivity presentValidationPlugin");
                     PluginManager.InitiatedPlugin plugin = manager.getInitiatedPlugin(validationPluginId);
 
                     if (plugin != null && plugin.instance instanceof PluginPresenter) {
