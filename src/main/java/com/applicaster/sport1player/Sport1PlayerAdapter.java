@@ -22,6 +22,8 @@ import com.longtailvideo.jwplayer.events.listeners.VideoPlayerEvents;
 import java.util.List;
 import java.util.Map;
 
+import timber.log.Timber;
+
 public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerEvents.OnFullscreenListener {
     private static final String TAG = Sport1PlayerAdapter.class.getSimpleName();
     private static final String PIN_VALIDATION_PLUGIN_ID = "pin_validation_plugin_id";
@@ -40,6 +42,11 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     private String livestreamConfig = "";
     private boolean isReceiverRegistered = false;
 
+// Enable to have Timber logs
+//    public Sport1PlayerAdapter() {
+//        if (Timber.treeCount() == 0) Timber.plant(new Timber.DebugTree());
+//    }
+
     private BroadcastReceiver validationReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -57,6 +64,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     @Override
     public void init(@NonNull Context appContext) {
         super.init(appContext);
+
         if (!isReceiverRegistered) {
             LocalBroadcastManager.getInstance(appContext).registerReceiver(validationReceiver,
                     new IntentFilter(PresentPluginActivity.VALIDATION_EVENT));
@@ -116,7 +124,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
          */
         final LoginContract loginPlugin = LoginManager.getLoginPlugin();
         this.isInline = isInline;
-        if (loginPlugin != null ){
+        if (loginPlugin != null) {
             loginPlugin.isItemLocked(getContext(), getFirstPlayable(), result -> {
                 if (result) {
                     loginPlugin.login(getContext(), getFirstPlayable(), null, loginResult -> {
@@ -166,7 +174,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         private boolean isInline;
 
         ApplicaterPlayerLoaderListener(boolean isInline) {
-            this.isInline=isInline;
+            this.isInline = isInline;
         }
 
         @Override
@@ -205,13 +213,13 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
 
                     @Override
                     public void onError(Throwable error) {
-                        if (error instanceof RestUtil.UnautorizedException) {
+                        if (error instanceof StreamTokenService.UnautorizedException) {
                             LoginContract loginPlugin = LoginManager.getLoginPlugin();
                             if (loginPlugin != null) {
                                 loginPlugin.login(getContext(), playable, null, loginResult -> onItemLoaded(playable));
                             }
                         } else {
-                            error.printStackTrace();
+                            Timber.e(error, "Stream token retrieve failed");
                         }
                     }
                 });
@@ -221,7 +229,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         }
 
         private void tryDisplayVideo(Playable playable) {
-            if (playable != null && validatePlayable(playable) && !playable.isFree()) {
+            if (playable != null && validatePlayable(playable) && isInline ) {
                 if (!playable.isLive()) {
                     //  live stream will wait for JSON check in processLivestreamData
                     Sport1PlayerUtils.displayValidation(getContext(), validationPluginId);
@@ -249,9 +257,9 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
                     //  There is some live stream config
 
                     livestreamConfig = result;
-                    if (Sport1PlayerUtils.isLiveValidationNeeded(result))
+                    if (Sport1PlayerUtils.isLiveValidationNeeded(result) && isInline) {
                         Sport1PlayerUtils.displayValidation(getContext(), validationPluginId);
-                    else
+                    } else
                         displayVideo(isInline);
                 } else {
                     //  No config - no need in validation

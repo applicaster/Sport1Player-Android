@@ -9,6 +9,8 @@ import android.support.v7.app.AppCompatActivity;
 import com.applicaster.plugin_manager.PluginManager;
 import com.applicaster.pluginpresenter.PluginPresenter;
 
+import timber.log.Timber;
+
 import static com.applicaster.pluginpresenter.PluginPresenter.PLUGIN_PRESENTER_REQUEST_CODE;
 
 public class PresentPluginActivity extends AppCompatActivity {
@@ -22,6 +24,7 @@ public class PresentPluginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Timber.d("PresentPluginActivity onCreate");
 
         Intent intent = getIntent();
         mPluginId = intent.getStringExtra(PLUGIN_ID_EXTRA);
@@ -38,6 +41,7 @@ public class PresentPluginActivity extends AppCompatActivity {
         PluginManager manager = PluginManager.getInstance();
         if (manager != null) {
             if (mPluginId != null && !mPluginId.isEmpty()) {
+                Timber.d("PresentPluginActivity present pin plugin");
                 PluginManager.InitiatedPlugin plugin = manager.getInitiatedPlugin(mPluginId);
 
                 if (plugin != null && plugin.instance instanceof PluginPresenter) {
