@@ -159,16 +159,6 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         applicasterPlayerLoader.loadItem();
     }
 
-    private boolean validatePlayable(Playable playable) {
-        if (playable.isLive()) {
-            getJSON(livestreamUrl);
-            //  wait for JSON data to call processLivestreamData
-            return true;
-        } else {
-            return Sport1PlayerUtils.isValidationNeeded(playable);
-        }
-    }
-
     /************************** PlayerLoaderI ********************/
     class ApplicaterPlayerLoaderListener implements PlayerLoaderI {
         private boolean isInline;
@@ -229,13 +219,35 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         }
 
         private void tryDisplayVideo(Playable playable) {
-            if (playable != null && validatePlayable(playable) && isInline ) {
-                if (!playable.isLive()) {
-                    //  live stream will wait for JSON check in processLivestreamData
-                    Sport1PlayerUtils.displayValidation(getContext(), validationPluginId);
-                }
+            if (playable.isLive()) {
+                RestUtil.get(livestreamUrl, null, new Callback() {
+
+                    @Override
+                    public void onResult(String result) {
+                        if (result != null) {
+                            livestreamConfig = result;
+                            if (Sport1PlayerUtils.isLiveValidationNeeded(result) && isInline) {
+                                Sport1PlayerUtils.displayValidation(getContext(), validationPluginId);
+                            } else
+                                displayVideo(isInline);
+                        } else {
+                            //  No config - no need in validation
+                            displayVideo(isInline);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        //  Failed to retrieve config - no need in validation
+                        displayVideo(isInline);
+                    }
+                });
             } else {
-                displayVideo(isInline);
+                if (Sport1PlayerUtils.isValidationNeeded(playable) && isInline) {
+                    Sport1PlayerUtils.displayValidation(getContext(), validationPluginId);
+                } else {
+                    displayVideo(isInline);
+                }
             }
         }
 
@@ -247,30 +259,5 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
         @Override
         public void showMediaErroDialog() {
         }
-    }
-
-    private void getJSON(final String webService) {
-        RestUtil.get(webService, null, new Callback() {
-            @Override
-            public void onResult(String result) {
-                if (result != null) {
-                    //  There is some live stream config
-
-                    livestreamConfig = result;
-                    if (Sport1PlayerUtils.isLiveValidationNeeded(result) && isInline) {
-                        Sport1PlayerUtils.displayValidation(getContext(), validationPluginId);
-                    } else
-                        displayVideo(isInline);
-                } else {
-                    //  No config - no need in validation
-                    displayVideo(isInline);
-                }
-            }
-
-            @Override
-            public void onError(Throwable error) {
-
-            }
-        });
     }
 }
