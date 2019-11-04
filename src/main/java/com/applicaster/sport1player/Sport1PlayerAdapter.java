@@ -29,9 +29,6 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     private static final String PIN_VALIDATION_PLUGIN_ID = "pin_validation_plugin_id";
     private static final String LIVESTREAM_URL = "livestream_url";
 
-    private static final String TOKEN_KEY = "stream_token";
-    private static final String NAMESPACE = "InPlayer.v1";
-
     private static final String STREAM_TOKEN_PARAM_NAME = "access_token";
     private static final String AUTH_ID_EXT_KEY = "auth_id";
     private static final String IN_PLAYER_API_BASE_URL = "https://services.inplayer.com";
@@ -41,11 +38,6 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
     private String livestreamUrl;
     private String livestreamConfig = "";
     private boolean isReceiverRegistered = false;
-
-// Enable to have Timber logs
-//    public Sport1PlayerAdapter() {
-//        if (Timber.treeCount() == 0) Timber.plant(new Timber.DebugTree());
-//    }
 
     private BroadcastReceiver validationReceiver = new BroadcastReceiver() {
         @Override
@@ -226,7 +218,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
                     public void onResult(String result) {
                         if (result != null) {
                             livestreamConfig = result;
-                            if (Sport1PlayerUtils.isLiveValidationNeeded(result) && isInline) {
+                            if (Sport1PlayerUtils.isLiveValidationNeeded(result) && !playable.isFree()) {
                                 Sport1PlayerUtils.displayValidation(getContext(), validationPluginId);
                             } else
                                 displayVideo(isInline);
@@ -243,7 +235,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
                     }
                 });
             } else {
-                if (Sport1PlayerUtils.isValidationNeeded(playable) && isInline) {
+                if (Sport1PlayerUtils.isValidationNeeded(playable) && !playable.isFree()) {
                     Sport1PlayerUtils.displayValidation(getContext(), validationPluginId);
                 } else {
                     displayVideo(isInline);
