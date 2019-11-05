@@ -82,25 +82,25 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
             long nextValidation = Sport1PlayerUtils.getNextValidationTime(liveConfig);
             long now = Sport1PlayerUtils.getCurrentTime();
             timeout = (nextValidation - now - 1) * 1000;
-        }
 
-        // Fix video not playing after pin validation.
-        timeout = Math.max(timeout, 50);
+            // Fix video not playing after pin validation.
+            timeout = Math.max(timeout, 50);
 
-        if (timer != null) {
-            timer.cancel();
-        }
-        timer = new CountDownTimer(timeout, timeout) {
-
-            @Override
-            public void onTick(long millisUntilFinished) {
+            if (timer != null) {
+                timer.cancel();
             }
+            timer = new CountDownTimer(timeout, timeout) {
 
-            @Override
-            public void onFinish() {
-                presentValidationPlugin();
-            }
-        }.start();
+                @Override
+                public void onTick(long millisUntilFinished) {
+                }
+
+                @Override
+                public void onFinish() {
+                    presentValidationPlugin();
+                }
+            }.start();
+        }
     }
 
     private void presentValidationPlugin() {
