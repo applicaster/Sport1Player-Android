@@ -43,6 +43,8 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
         validationPluginId = getIntent().getStringExtra(VALIDATION_KEY);
         liveConfig = getIntent().getStringExtra(LIVECONFIG_KEY);
         wasPaused = false;
+        //  it was validated in adapter before starting this activity if not free
+        videoValidated = !playable.isFree();
     }
 
     @Override
