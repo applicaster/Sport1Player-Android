@@ -93,7 +93,7 @@ class Sport1PlayerUtils {
                     long startTime = Sport1PlayerUtils.dateToTimestamp(start);
                     long endTime = Sport1PlayerUtils.dateToTimestamp(end);
 
-                    if (startTime <= now && now < endTime) {
+                    if (startTime < now && now < endTime) {
                         String fsk = stream.containsKey(FSK_KEY) ? (String) stream.get(FSK_KEY) : "";
                         return getFsk(fsk) >= Sport1PlayerUtils.VALIDATION_AGE;
                     }
