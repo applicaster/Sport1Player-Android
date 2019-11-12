@@ -97,7 +97,6 @@ class Sport1PlayerUtils {
                         String fsk = stream.containsKey(FSK_KEY) ? (String) stream.get(FSK_KEY) : "";
                         return getFsk(fsk) >= Sport1PlayerUtils.VALIDATION_AGE;
                     }
-
                 }
             }
         }

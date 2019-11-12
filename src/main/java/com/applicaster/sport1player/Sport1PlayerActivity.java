@@ -13,8 +13,6 @@ import com.applicaster.pluginpresenter.PluginPresenter;
 
 import java.util.Map;
 
-import timber.log.Timber;
-
 import static com.applicaster.pluginpresenter.PluginPresenter.PLUGIN_PRESENTER_REQUEST_CODE;
 
 public class Sport1PlayerActivity extends JWPlayerActivity {
@@ -48,14 +46,13 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
     }
 
     @Override
-    protected void onResume() {
-        Timber.d("Sport1PlayerActivity onResume videoValidated :: " + videoValidated + " wasPaused :: " + wasPaused);
+    protected void onStart() {
         if (wasPaused && videoValidated) {
             wasPaused = false;
             presentValidationPlugin();
         }
         setupNextValidation();
-        super.onResume();
+        super.onStart();
     }
 
     @Override
