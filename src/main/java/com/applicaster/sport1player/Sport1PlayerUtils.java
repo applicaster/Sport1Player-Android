@@ -152,4 +152,36 @@ class Sport1PlayerUtils {
 
         return 0;
     }
+
+    static long getProgramFinishTime(String json) {
+        if (json.isEmpty())
+            return 0;
+
+        Type mapType = new TypeToken<LinkedTreeMap<Object, Object>>(){}.getType();
+        Map<Object, Object> data = new Gson().fromJson(json, mapType);
+
+        long now = Sport1PlayerUtils.getCurrentTime();
+
+        //  get current program end time
+        if (data.containsKey(EPG_KEY)) {
+            List<LinkedTreeMap<Object, Object>> epg = (List<LinkedTreeMap<Object, Object>>) data.get(EPG_KEY);
+            if (epg != null && epg.size() > 0) {
+                for (int i = 0; i < epg.size(); i++) {
+                    LinkedTreeMap<Object, Object> stream = epg.get(i);
+                    if (!stream.containsKey(START_KEY) || !stream.containsKey(END_KEY))
+                        continue;
+
+                    String start = (String) stream.get(START_KEY);
+                    String end = (String) stream.get(END_KEY);
+                    long startTime = Sport1PlayerUtils.dateToTimestamp(start);
+                    long endTime = Sport1PlayerUtils.dateToTimestamp(end);
+                    if (startTime < now && now <= endTime) {
+                        return endTime;
+                    }
+                }
+            }
+        }
+
+        return 0;
+    }
 }

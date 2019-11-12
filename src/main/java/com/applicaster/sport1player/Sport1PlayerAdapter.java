@@ -142,6 +142,7 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
             bundle.putSerializable(Sport1PlayerActivity.PLAYABLE_KEY, getFirstPlayable());
             bundle.putString(Sport1PlayerActivity.VALIDATION_KEY, validationPluginId);
             bundle.putString(Sport1PlayerActivity.LIVECONFIG_KEY, livestreamConfig);
+            bundle.putString(Sport1PlayerActivity.LIVEURL_KEY, livestreamUrl);
             Sport1PlayerActivity.startPlayerActivity(getContext(), bundle, getPluginConfigurationParams());
         }
     }
@@ -223,15 +224,15 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
                             } else
                                 displayVideo(isInline);
                         } else {
-                            //  No config - no need in validation
-                            displayVideo(isInline);
+                            //  No config - request it again
+                            tryDisplayVideo(playable);
                         }
                     }
 
                     @Override
                     public void onError(Throwable error) {
-                        //  Failed to retrieve config - no need in validation
-                        displayVideo(isInline);
+                        //  Failed to retrieve config - request it again
+                        tryDisplayVideo(playable);
                     }
                 });
             } else {
