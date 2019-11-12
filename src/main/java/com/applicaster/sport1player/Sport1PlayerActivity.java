@@ -43,7 +43,7 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
         validationPluginId = getIntent().getStringExtra(VALIDATION_KEY);
         liveConfig = getIntent().getStringExtra(LIVECONFIG_KEY);
         wasPaused = false;
-        //  it was validated in adapter before starting this activity if not free
+        //  it is validated in adapter before starting this activity if not free
         videoValidated = !playable.isFree();
     }
 
@@ -54,9 +54,7 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
             wasPaused = false;
             presentValidationPlugin();
         }
-        if (!videoValidated) {
-            setupNextValidation();
-        }
+        setupNextValidation();
         super.onResume();
     }
 
@@ -83,37 +81,35 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
         if (playable != null && playable.isLive()) {
             long nextValidation = Sport1PlayerUtils.getNextValidationTime(liveConfig);
             long now = Sport1PlayerUtils.getCurrentTime();
-            timeout = (nextValidation - now - 1) * 1000;
+            timeout = (nextValidation - now) * 1000;
 
-            // Fix video not playing after pin validation.
-            timeout = Math.max(timeout, 50);
+            if (timeout > 0) {
+                if (timer != null) {
+                    timer.cancel();
+                }
+                timer = new CountDownTimer(timeout, timeout) {
 
-            if (timer != null) {
-                timer.cancel();
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        presentValidationPlugin();
+                    }
+                }.start();
             }
-            timer = new CountDownTimer(timeout, timeout) {
-
-                @Override
-                public void onTick(long millisUntilFinished) {
-                }
-
-                @Override
-                public void onFinish() {
-                    presentValidationPlugin();
-                }
-            }.start();
         }
     }
 
     private void presentValidationPlugin() {
         if (playable != null &&
-                (playable.isLive() && Sport1PlayerUtils.isLiveValidationNeeded(liveConfig))
-                || Sport1PlayerUtils.isValidationNeeded(playable)) {
+                ((playable.isLive() && Sport1PlayerUtils.isLiveValidationNeeded(liveConfig))
+                || Sport1PlayerUtils.isValidationNeeded(playable))) {
             PluginManager manager = PluginManager.getInstance();
             if (manager != null) {
                 if (validationPluginId != null && !validationPluginId.isEmpty()) {
                     PluginManager.InitiatedPlugin plugin = manager.getInitiatedPlugin(validationPluginId);
-
                     if (plugin != null && plugin.instance instanceof PluginPresenter) {
                         ((PluginPresenter) plugin.instance).setPluginModel(plugin.plugin);
                         ((PluginPresenter) plugin.instance).presentPlugin(this, null);
