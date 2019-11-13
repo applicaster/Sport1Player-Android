@@ -69,6 +69,7 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
             public void onActivityPaused(Activity activity) {
                 wasPaused = true;
                 clearNextValidation();
+                clearNextRefresh();
             }
 
             @Override
@@ -154,7 +155,7 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
         long timeout = (nextUpdate - now) * 1000;
 
         if (timeout > 0) {
-            clearNextUpdate();
+            clearNextRefresh();
             refreshTimer = new CountDownTimer(timeout, timeout) {
                 @Override
                 public void onTick(long millisUntilFinished) {
@@ -192,7 +193,7 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
         });
     }
 
-    private void clearNextUpdate() {
+    private void clearNextRefresh() {
         if (refreshTimer != null)
             refreshTimer.cancel();
     }
