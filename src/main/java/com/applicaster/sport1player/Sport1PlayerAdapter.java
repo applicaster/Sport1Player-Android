@@ -141,8 +141,9 @@ public class Sport1PlayerAdapter extends JWPlayerAdapter implements VideoPlayerE
             Bundle bundle = new Bundle();
             bundle.putSerializable(Sport1PlayerActivity.PLAYABLE_KEY, getFirstPlayable());
             bundle.putString(Sport1PlayerActivity.VALIDATION_KEY, validationPluginId);
-            bundle.putString(Sport1PlayerActivity.LIVECONFIG_KEY, livestreamConfig);
             bundle.putString(Sport1PlayerActivity.LIVEURL_KEY, livestreamUrl);
+            //  can't be passed in bundle, due to its size
+            Sport1PlayerActivity.liveConfig = livestreamConfig;
             Sport1PlayerActivity.startPlayerActivity(getContext(), bundle, getPluginConfigurationParams());
         }
     }
