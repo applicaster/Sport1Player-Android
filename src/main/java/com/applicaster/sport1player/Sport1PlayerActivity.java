@@ -21,12 +21,11 @@ import static com.applicaster.pluginpresenter.PluginPresenter.PLUGIN_PRESENTER_R
 public class Sport1PlayerActivity extends JWPlayerActivity {
     static final String PLAYABLE_KEY = "playable";
     static final String VALIDATION_KEY = "validation";
-    static final String LIVECONFIG_KEY = "live_config";
     static final String LIVEURL_KEY = "live_url";
 
     private Playable playable;
     private String validationPluginId;
-    private volatile String liveConfig;
+    static volatile String liveConfig;
     private String liveUrl;
     private boolean wasPaused;
     private CountDownTimer timer = null;
@@ -47,7 +46,6 @@ public class Sport1PlayerActivity extends JWPlayerActivity {
 
         playable = (Playable) getIntent().getSerializableExtra(PLAYABLE_KEY);
         validationPluginId = getIntent().getStringExtra(VALIDATION_KEY);
-        liveConfig = getIntent().getStringExtra(LIVECONFIG_KEY);
         liveUrl = getIntent().getStringExtra(LIVEURL_KEY);
         wasPaused = false;
         //  it is validated in adapter before starting this activity if not free
