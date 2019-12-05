@@ -31,6 +31,7 @@ class Sport1PlayerUtils {
     private static final String FSK_KEY = "fsk";
     private static final String FSK_PATTERN = "FSK\\s*(\\d+)";
     private static final double VALIDATION_AGE = 16f;
+    private static final String CURRENT_TIME_KEY = "currentTime";
 
     //region public methods
 
@@ -87,7 +88,18 @@ class Sport1PlayerUtils {
     //region private methods
 
     private static long getCurrentTime(String json) {
-        return Calendar.getInstance().getTimeInMillis() / 1000;
+        if (json.isEmpty())
+            return 0;
+
+        Type mapType = new TypeToken<LinkedTreeMap<Object, Object>>(){}.getType();
+        Map<Object, Object> data = new Gson().fromJson(json, mapType);
+
+        if (data.containsKey(CURRENT_TIME_KEY)) {
+            String currentTime = (String)data.get(CURRENT_TIME_KEY);
+            return dateToTimestamp(currentTime);
+        }
+
+        return 0;
     }
 
     private static long dateToTimestamp(String dateString) {
