@@ -32,20 +32,7 @@ class Sport1PlayerUtils {
     private static final String FSK_PATTERN = "FSK\\s*(\\d+)";
     private static final double VALIDATION_AGE = 16f;
 
-    private static long dateToTimestamp(String dateString) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT, Locale.US);
-        Date date = new Date();
-        try {
-            date = dateFormat.parse(dateString);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return date.getTime() / 1000;
-    }
-
-    static long getCurrentTime() {
-        return Calendar.getInstance().getTimeInMillis() / 1000;
-    }
+    //region public methods
 
     static boolean isValidationNeeded(Playable playable) {
         if (playable.isLive())
@@ -71,37 +58,47 @@ class Sport1PlayerUtils {
     }
 
     static boolean isLiveValidationNeeded(String json) {
-        if (json.isEmpty())
+        LinkedTreeMap<Object, Object> currentJSONProgram = getCurrentJSONProgram(json);
+        if (currentJSONProgram == null)
             return false;
 
-        Type mapType = new TypeToken<LinkedTreeMap<Object, Object>>(){}.getType();
-        Map<Object, Object> data = new Gson().fromJson(json, mapType);
+        String fsk = currentJSONProgram.containsKey(FSK_KEY) ? (String) currentJSONProgram.get(FSK_KEY) : "";
+        return getFsk(fsk) >= Sport1PlayerUtils.VALIDATION_AGE;
+    }
 
-        long now = Sport1PlayerUtils.getCurrentTime();
+    /**
+     * Returns a timeout of when the next program is about to start, that is, the number of seconds for the next program.
+     *
+     * @param json the json of the teaser URL
+     */
+    static long getNextProgramTimeout(String json) {
+        LinkedTreeMap<Object, Object> currentJSONProgram = getCurrentJSONProgram(json);
+        if (currentJSONProgram == null)
+            return 0;
 
-        //  Check for age restriction
-        if (data.containsKey(EPG_KEY)) {
-            List<LinkedTreeMap<Object, Object>> epg = (List<LinkedTreeMap<Object, Object>>) data.get(EPG_KEY);
-            if (epg != null && epg.size() > 0) {
-                for (int i = 0; i < epg.size(); i++) {
-                    LinkedTreeMap<Object, Object> stream = epg.get(i);
-                    if (!stream.containsKey(START_KEY) || !stream.containsKey(END_KEY))
-                        continue;
+        String end = (String) currentJSONProgram.get(END_KEY);
+        long endTime = Sport1PlayerUtils.dateToTimestamp(end);
+        long now = Sport1PlayerUtils.getCurrentTime(json);
+        return (endTime - now) * 1000;
+    }
 
-                    String start = (String) stream.get(START_KEY);
-                    String end = (String) stream.get(END_KEY);
-                    long startTime = Sport1PlayerUtils.dateToTimestamp(start);
-                    long endTime = Sport1PlayerUtils.dateToTimestamp(end);
+    //endregion
 
-                    if (startTime <= now && now < endTime) {
-                        String fsk = stream.containsKey(FSK_KEY) ? (String) stream.get(FSK_KEY) : "";
-                        return getFsk(fsk) >= Sport1PlayerUtils.VALIDATION_AGE;
-                    }
-                }
-            }
+    //region private methods
+
+    private static long getCurrentTime(String json) {
+        return Calendar.getInstance().getTimeInMillis() / 1000;
+    }
+
+    private static long dateToTimestamp(String dateString) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT, Locale.US);
+        Date date = new Date();
+        try {
+            date = dateFormat.parse(dateString);
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
-
-        return false;
+        return date.getTime() / 1000;
     }
 
     private static double getFsk(String fsk) {
@@ -112,57 +109,15 @@ class Sport1PlayerUtils {
         return fskAge;
     }
 
-    static long getNextValidationTime(String json) {
+    private static LinkedTreeMap<Object, Object> getCurrentJSONProgram(String json) {
         if (json.isEmpty())
-            return 0;
+            return null;
 
         Type mapType = new TypeToken<LinkedTreeMap<Object, Object>>(){}.getType();
         Map<Object, Object> data = new Gson().fromJson(json, mapType);
 
-        long now = Sport1PlayerUtils.getCurrentTime();
+        long now = Sport1PlayerUtils.getCurrentTime(json);
 
-        //  Check for age restriction
-        if (data.containsKey(EPG_KEY)) {
-            boolean isNow = false;
-            List<LinkedTreeMap<Object, Object>> epg = (List<LinkedTreeMap<Object, Object>>) data.get(EPG_KEY);
-            if (epg != null && epg.size() > 0) {
-                for (int i = 0; i < epg.size(); i++) {
-                    LinkedTreeMap<Object, Object> stream = epg.get(i);
-                    if (!stream.containsKey(START_KEY) || !stream.containsKey(END_KEY))
-                        continue;
-
-                    String start = (String) stream.get(START_KEY);
-                    String end = (String) stream.get(END_KEY);
-                    long startTime = Sport1PlayerUtils.dateToTimestamp(start);
-                    long endTime = Sport1PlayerUtils.dateToTimestamp(end);
-
-                    if (isNow && stream.containsKey(FSK_KEY)) {
-                        double fskAge = getFsk((String) stream.get(FSK_KEY));
-                        if (fskAge >= VALIDATION_AGE) {
-                            return startTime;
-                        }
-                    }
-
-                    if (startTime < now && now < endTime) {
-                        isNow = true;
-                    }
-                }
-            }
-        }
-
-        return 0;
-    }
-
-    static long getProgramFinishTime(String json) {
-        if (json.isEmpty())
-            return 0;
-
-        Type mapType = new TypeToken<LinkedTreeMap<Object, Object>>(){}.getType();
-        Map<Object, Object> data = new Gson().fromJson(json, mapType);
-
-        long now = Sport1PlayerUtils.getCurrentTime();
-
-        //  get current program end time
         if (data.containsKey(EPG_KEY)) {
             List<LinkedTreeMap<Object, Object>> epg = (List<LinkedTreeMap<Object, Object>>) data.get(EPG_KEY);
             if (epg != null && epg.size() > 0) {
@@ -176,12 +131,12 @@ class Sport1PlayerUtils {
                     long startTime = Sport1PlayerUtils.dateToTimestamp(start);
                     long endTime = Sport1PlayerUtils.dateToTimestamp(end);
                     if (startTime < now && now <= endTime) {
-                        return endTime;
+                        return stream;
                     }
                 }
             }
         }
 
-        return 0;
+        return null;
     }
 }
