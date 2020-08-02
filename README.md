@@ -28,7 +28,7 @@ The client should provide those following keys:
 - Pin Validation Plugin Id - the id of the pin validation plugin
 - Livestream Url - url for livestream epg - using in the age verification
 
-![Configurations](readme_images/sport1PlayerConfiguraionScreenshot.png)
+![Configurations](readme_images/configuraion.png)
 
 ## Project Setup (Android)
 
