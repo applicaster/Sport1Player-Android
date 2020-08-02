@@ -7,18 +7,18 @@
 
 ## About
 
-a player plugin for sport1, wrapper around JWPlayerPlugin
+A player plugin for sport1, wrapper around JWPlayerPlugin
 
-### features and behaviour:
+### Features and behaviour:
 
-- display the login plugin when needed (if playable is not free or if the user login token is missing for live content)
-- for live content - get stream url from a service using the user login token
-- age validation screen (pin code) - presented by "webviewPin" plugin
-  - for vod  - according "tracking_info" extension
-  - for live
-    - use the = "livestream url" service for getting the epg.
-    - use the epg to decide about showing the validation plugin.
-    - calculated for each program
+- Display the login plugin when needed (if playable is not free or if the user login token is missing for live content)
+- For live content - get stream url from a service using the user login token
+- Age validation screen (pin code) - presented by "webviewPin" plugin
+  - For vod  - according "tracking_info" extension
+  - For live
+    - Use the = "livestream url" service for getting the epg.
+    - Use the epg to decide about showing the validation plugin.
+    - Calculated for each program
 
 
 ## Configuration
